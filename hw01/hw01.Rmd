@@ -1,15 +1,87 @@
 ---
-title: "hw01"
-output: pdf
+title: "Homework 1"
+author: Christian Kroiss
+date: 2020-03-18
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(bnlearn)
+library(Rgraphviz)
 ```
 
-## Homework 1
-Author: Christian Kroiss
+## 1. Building a DAG
+
+$P(A, S, E, O, R, T) = P(A)P(S)P(E|A,S)P(O|E)P(R|E)P(T|O,R)$
+
 
 ```{r}
-library(bnlearn)
+dag <- model2network("[A][S][E|A:S][O|E][R|E][T|O:R]")
 ```
+
+Class: `r class(dag)`
+
+
+```{r}
+graphviz.plot(dag)
+```
+
+## 2. Experimenting with graph utilities
+
+### Nodes
+```{r}
+dag$nodes$A
+```
+### Arcs
+```{r}
+dag$arcs
+```
+
+### a,b,c) Parents, Children, Markov Blanket
+```{r}
+for (n in names(dag$nodes)) {
+  print(sprintf("%s: parents = %s, children = %s, markov blanket = %s", n, 
+                paste(parents(dag, n), collapse = ", "),
+                paste(children(dag, n), collapse = ", "),
+                paste(mb(dag, n), collapse = ", ")))
+}
+```
+
+### d) Markov blanket
+
+Let $X = \{A, E, O, R, S, T \}$ be the set of variables in the joint distribution $P(A, E, O, R, S, T)$. Then, a markov blanket of a variable $x \in X$ is a subset $B \subset X$ for which the following holds: 
+given $B$, then $x$ is conditionally independent of all other variables. i.e.  
+$$
+P(x| X \setminus \{x\}) = P(x| B)
+$$
+
+### e) Identifying markov blankets
+
+For finding a markov blanket for variable $x$, I check every path to every other variable in the graph and determine which nodes have to be blocked to block the path in terms of d-separation.
+
+## 3. CPD estimation
+
+```{r}
+survey = read.csv("survey2.txt", header = TRUE, sep = " ")
+model <- bn.fit(dag, data = survey, method = "bayes")
+```
+```{r}
+model
+```
+
+
+
+## 4, Graph manipulation
+```{r}
+dag2 <- dag
+dag2 <- drop.arc(dag2, "E", "O")
+graphviz.plot(dag2)
+```
+
+```{r}
+model2 <- bn.fit(dag2, data = survey, method = "bayes")
+```
+
+
+
