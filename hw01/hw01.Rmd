@@ -83,5 +83,47 @@ graphviz.plot(dag2)
 model2 <- bn.fit(dag2, data = survey, method = "bayes")
 ```
 
+```{r}
+model$O$prob
+```
+
+```{r}
+cpquery(model, (O == "emp"), (E == "high"))
+```
 
 
+```{r}
+model2$O$prob
+```
+
+Only the CPT of `O` changed. In the model after the graph manipulation, the CPT for `O` has only 2 entries instead of 4. The probabilities for `emp` and `self` are close to the averages of the respective rows from the original model, containing entries for `high` and `uni` of `E`.
+
+## 5. Markov equivalence
+```{r}
+P1 = cpdag(dag)
+```
+
+```{r fig.cap="P1"}
+graphviz.plot(P1)
+```
+
+
+```{r}
+D2 <- dag
+D2 <- set.arc(D2, "O", "R")
+```
+
+```{r}
+graphviz.plot(D2)
+```
+```{r}
+P2 <- cpdag(D2)
+```
+
+```{r}
+graphviz.plot(P2)
+```
+
+```{r}
+P1$arcs
+```
