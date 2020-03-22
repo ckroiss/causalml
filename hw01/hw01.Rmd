@@ -64,13 +64,12 @@ For finding a markov blanket for variable $x$, I check every path to every other
 
 ```{r}
 survey = read.csv("survey2.txt", header = TRUE, sep = " ")
-model <- bn.fit(dag, data = survey, method = "bayes")
-```
-```{r}
-model
+model <- bn.fit(dag, data = survey, method = "bayes", iss=10)
+model_large_prior <- bn.fit(dag, data = survey, method = "bayes", iss=100000)
+model_large_prior
 ```
 
-
+(b) When `iss` is very large, the CPTs 
 
 ## 4, Graph manipulation
 ```{r}
@@ -113,6 +112,8 @@ D2 <- dag
 D2 <- set.arc(D2, "O", "R")
 ```
 
+
+
 ```{r}
 graphviz.plot(D2)
 ```
@@ -127,3 +128,30 @@ graphviz.plot(P2)
 ```{r}
 P1$arcs
 ```
+
+(c) The only difference is that the edge between `O` and `R` is undirected in `P2`.
+
+(d) 
+```{r}
+D3 <- dag
+D3 <- set.arc(D3, "R", "O")
+graphviz.plot(D3)
+```
+```{r}
+D3$arcs
+```
+```{r}
+P3 <- cpdag(D3)
+```
+
+```{r}
+graphviz.plot(P3)
+```
+
+(e)
+
+```{r}
+logLik(D2, data = survey)
+logLik(D3, data = survey)
+```
+
