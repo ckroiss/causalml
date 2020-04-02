@@ -1,0 +1,56 @@
+---
+title: "Homework 2"
+author: Christian Kroiss
+date: 2020-03-30
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(bnlearn)
+library(Rgraphviz)
+```
+
+
+
+```{r}
+dag <- model2network("[A][S][E|A:S][O|E][R|E][T|O:R]")
+```
+
+```{r}
+graphviz.plot(dag)
+```
+
+```{r}
+d_sep <- bnlearn:::dseparation
+
+d_sep(bn = dag, x = 'O', y = 'R', z=c('E', 'T'))
+
+```
+
+```{r}
+vars <- nodes(dag)
+pairs <- combn(x = vars, 2, list)
+arg_sets <- list()
+
+for (pair in pairs) {
+  others <- setdiff(vars, pair)
+  conditioning_sets <- unlist(lapply(0:4, function(.x) combn(others, .x, list)), recursive = F)
+  for (set in conditioning_sets) {
+    args <-list(x = pair[1], y = pair[2], z = set)
+    arg_sets <- c(arg_sets, list(args))
+  }
+}
+```
+
+```{r}
+d_seperated = list()
+for (args in arg_sets) {
+  if (d_sep(bn=dag, x=args$x, y=args$y, z=args$z)) {
+    d_seperated <- c(d_seperated, list(args))
+    print(sprintf("%s and %s are d-separated given {%s}", args$x, args$y, paste(args$z, collapse=",")))
+  }
+}
+```
+
+
