@@ -25,7 +25,6 @@ graphviz.plot(dag)
 d_sep <- bnlearn:::dseparation
 
 d_sep(bn = dag, x = 'O', y = 'R', z=c('E', 'T'))
-
 ```
 
 ```{r}
@@ -43,14 +42,139 @@ for (pair in pairs) {
 }
 ```
 
+## 1.a
+
 ```{r}
-d_seperated = list()
+d_separated = list()
 for (args in arg_sets) {
   if (d_sep(bn=dag, x=args$x, y=args$y, z=args$z)) {
-    d_seperated <- c(d_seperated, list(args))
+    d_separated <- c(d_separated, list(args))
     print(sprintf("%s and %s are d-separated given {%s}", args$x, args$y, paste(args$z, collapse=",")))
   }
 }
 ```
 
+## 1.b
+
+```{r}
+"%subsetof%" <- function(u,v) {
+  return(setequal(intersect(u,v),u))
+}
+
+entails <- function(rule1, rule2) {
+  return((rule1$x == rule2$x) && (rule1$y == rule2$y)
+         && (rule1$z %subsetof% rule2$z))
+}
+str_dsep <- function(ds) {
+  sprintf("%s _|_ %s | {%s}", ds$x, ds$y, paste(ds$z, collapse=","))
+}
+```
+
+```{r}
+d_separated_non_redundant <- list()
+
+for (ds in d_separated) {
+  print(str_dsep(ds))
+  other_ds <- setdiff(d_separated, list(ds))
+  entailing <- sapply(other_ds, function(ds2) {entails(ds2, ds)})
+  if (!any(entailing)) {
+    d_separated_non_redundant <- c(d_separated_non_redundant,
+                                   list(ds))
+    print(sprintf("No rule entails %s", str_dsep(ds)))
+  } else {
+    for (ds2 in other_ds[entailing]) {
+     print(sprintf("%s entails %s", str_dsep(ds2), str_dsep(ds)))
+    }
+  }
+  print("-------")
+}
+```
+
+## 1.c
+
+- check subsets in first loop?
+
+## 1.d
+```{r}
+survey = read.csv("survey2.txt", header = TRUE, sep = " ")
+#test_outcome <- ci.test('T', 'E', c('O', 'R'), survey)
+test_outcome <- ci.test('A', 'R', z=c('E'), data=survey)
+print(test_outcome)
+```
+```{r}
+for (ds in d_separated) {
+ 
+  res <- if (length(ds$z) > 0) {
+    ci.test(x = ds$x, y=ds$y, z=ds$z, data=survey)
+  } else {
+    ci.test(x = ds$x, y=ds$y, data=survey)
+  }
+  if (res$p.value <= 0.05) {
+    print(str_dsep(ds))
+    print(res$p.value)
+    print("-----")
+  }
+}
+```
+
+## 1.e
+
+All d_separated statements where the independece hypothesis is rejected are redundant.
+
+
+## 2.a
+
+```{r}
+cond_ind = list()
+for (args in arg_sets) {
+  res <- if (length(args$z) > 0) {
+    ci.test(x = args$x, y=args$y, z=args$z, data=survey)
+  } else {
+    ci.test(x = args$x, y=args$y, data=survey)
+  }
+  if (res$p.value >= 0.05) {
+    cond_ind <- c(cond_ind, list(args))
+  }
+  
+}
+
+```
+
+## 2.b
+What is the proportion of true D-separation
+statements that are also true conditional independence statements?
+
+```{r}
+p_d_sep_ci <- (length(intersect(cond_ind, d_separated)) / 
+  length(d_separated))
+print(p_d_sep_ci)
+
+```
+
+## 2.c
+What is the proportion of true conditional independence statements that are also true-deseparation statements?
+
+```{r}
+p_ci_dsep <- (length(intersect(cond_ind, d_separated)) / 
+  length(cond_ind))
+print(p_ci_dsep)
+```
+
+## 2.d
+How would these results change if we only considered non-redundant d-separation statements?
+
+```{r}
+(length(intersect(cond_ind, d_separated_non_redundant)) / 
+  length(d_separated_non_redundant))
+```
+```{r}
+(length(intersect(cond_ind, d_separated_non_redundant)) / 
+  length(cond_ind)) 
+```
+## 2.e
+**Q:** Based on these results, how well do the faithfulness assumption and global Markov property assumption hold
+up with this DAG and dataset?
+
+
+**A:** global Markov property holds for non-redundant d-separation statements. Faithfulness doesn't hold
 
