@@ -176,5 +176,87 @@ How would these results change if we only considered non-redundant d-separation 
 up with this DAG and dataset?
 
 
-**A:** global Markov property holds for non-redundant d-separation statements. Faithfulness doesn't hold
+**A:** global Markov property holds for non-redundant d-separation statements. Faithfulness doesn't hold.
+
+## 3.
+```{r}
+net <- model2network('[A][B|A][C|B:A]')
+nombres <- c('off', 'on')
+cptA <- matrix(c(0.5, 0.5), ncol=2)
+dimnames(cptA) <- list(NULL, nombres)
+cptB <- matrix(c(.8, .2, .1, .9), ncol=2)
+dimnames(cptB) <- list(B = nombres, A = nombres)
+cptC <- matrix(c(.9, .1, .99, .01, .1, .9, .4, .6))
+dim(cptC) <- c(2, 2, 2)
+dimnames(cptC) <- list(C = nombres, A = nombres, B = nombres)
+model <- custom.fit(net, list(A = cptA, B = cptB, C = cptC))
+graphviz.plot(model)
+```
+## 3.a
+
+```{r}
+#model$C
+dim(model$C$prob)
+p_res = 0.5 * 0.9 * 0.6 / (0.5 * 0.9 * 0.6 + 0.5 * 0.2 * 0.9)
+print(p_res)
+```
+$P(A=on|B=on, C=on) = \frac{P(A=on)P(B=on|A=on)P(C=on|A=on,B=on)}{P(A=on)P(B=on|A=on)P(C=on|A=on,B=on) + P(A=off)P(B=on|A=off)P(C=on|A=off,B=on)}$
+
+$= \frac{0.5 * 0.9 * 0.6}{0.5 * 0.9 * 0.6 + 0.5 * 0.2 * 0.9}$
+
+$= 0.75$
+
+## 3.b
+```{r}
+sampled <- rbn(model, n=100000)
+```
+
+```{r}
+sampled_b1_c1 <- sampled %>% filter((B == "on") & (C == "on"))
+
+sampled_a1_b1_c1 <- sampled_b1_c1 %>% filter(A == "on")
+
+sampled_a0_b1_c1 <- sampled_b1_c1 %>% filter(A == "off")
+```
+
+```{r}
+p_rejection_sampling <- dim(sampled_a1_b1_c1)[1] / dim(sampled_b1_c1)[1]
+print(p_rejection_sampling)
+```
+
+## 3.c
+
+```{r}
+model_mutilated <- mutilated(model, list(B="on"))
+graphviz.plot(model_mutilated)
+
+```
+```{r}
+model_mutilated$B
+```
+
+## 3.d
+```{r}
+p_res_mutilated = 0.5 * 1 * 0.6 / (0.5 * 1 * 0.6 + 0.5 * 1 * 0.9)
+print(p_res_mutilated)
+```
+
+## 3.e
+```{r}
+sampled_mutilated <- rbn(model_mutilated, n=100000)
+```
+
+```{r}
+sampled_gm_b1_c1 <- sampled_mutilated %>% filter((B == "on") & (C == "on"))
+
+sampled_gm_a1_b1_c1 <- sampled_gm_b1_c1 %>% filter(A == "on")
+
+```
+
+```{r}
+p_gm_rejection_sampling <- dim(sampled_gm_a1_b1_c1)[1] / dim(sampled_gm_b1_c1)[1]
+print(p_gm_rejection_sampling)
+```
+
+```
 
